@@ -1,6 +1,6 @@
 local M = {}
 
-function M.open(payload)
+function M.open(payload, ft)
   local text = vim.base64.decode(payload)
 
   vim.schedule(function()
@@ -11,7 +11,9 @@ function M.open(payload)
     vim.bo[buf].bufhidden = "wipe"
     vim.bo[buf].buftype = "nofile"
     vim.bo[buf].swapfile = false
-    vim.bo[buf].filetype = "sh"
+
+    -- vim.bo[buf].filetype = ft or vim.filetype.match({ buf = 0 }) -- 這個效果不太好
+    vim.bo[buf].filetype = ft or "sh"
 
     local lines = vim.split(
       text:gsub("\n$", ""),

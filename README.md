@@ -17,8 +17,23 @@ vim.pack.add({ "https://github.com/CarsonSlovoka/reference.nvim" })
 # 也可以考慮寫到 ~/.bashrc
 cat >> ~/.zshrc <<'sh'
 function nvimRef() {
+  local ft="${1:-sh}"
+
+  # 避免特殊字元破壞 remote-expr 表達式
+  case "$ft" in
+    *[!a-zA-Z0-9_.-]*)
+      printf 'Invalid filetype: %s\n' "$ft" >&2
+      return 1
+      ;;
+  esac
+
   if [ -z "${NVIM:-}" ]; then
-    bat -l bash -P
+    case "$ft" in
+      sh) ft=bash ;;
+      text) ft=txt ;;
+    esac
+
+    bat -l "$ft" -P
     return
   fi
 
@@ -26,10 +41,9 @@ function nvimRef() {
   payload=$(base64 | tr -d '\n') || return
 
   nvim --server "$NVIM" \
-    --remote-expr "luaeval('require(\"reference\").open(_A)', '$payload')" \
+    --remote-expr "luaeval('require(\"reference\").open(_A[1], _A[2])', ['$payload', '$ft'])" \
     >/dev/null
 }
-sh
 ```
 
 
@@ -47,4 +61,10 @@ cat <<-\sh | nvimRef
     gh repo create __Project__ --public  --source=. --push
 sh
 
+# 範例3 指定filetype (預設為sh)
+cat <<\lua | nvimRef lua
+vim.keymap.set("n", "<leader>x", function()
+  print("Hello World")
+end)
+lua
 ```
